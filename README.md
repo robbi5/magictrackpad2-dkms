@@ -3,13 +3,13 @@ magictrackpad2-dkms
 
 A DKMS module for patching the bcm5974 and hid drivers to support the Apple Magic Trackpad 2.
 
-Tested with Kernel 4.4.0-57-generic on Ubuntu 16.04 LTS.
+Tested with Kernel 4.13.0-16-generic on Ubuntu 16.04 LTS.
 
 How to install
 --------------
 
 It should be enough to install the package. If it still doesn't work, you may have to copy the kernel modules from
-`/lib/modules/4.4.0-57-generic/updates/dkms/` to `/lib/modules/4.4.0-57-generic/kernel/drivers/hid/`
+`/lib/modules/4.13.0-16-generic/updates/dkms/` to `/lib/modules/4.13.0-16-generic/kernel/drivers/hid/`
 
 * http://unix.stackexchange.com/questions/240593/kernel-not-recognizing-new-devices-from-dkms-module
 
@@ -30,22 +30,23 @@ How to update
 
 Install the current kernel sources: `sudo apt-get install linux-source`
 
-The sources are then available at `/usr/src/linux-source-4.4.0/linux-source-4.4.0.tar.bz2`.
+The sources are then available at `/usr/src/linux-source-4.13.0/linux-source-4.13.0.tar.bz2`.
 
 Extract following files to `src/bcm5974...`:
-* `/linux-source-4.4.0/drivers/input/mouse/bcm5974.c`
+* `/linux-source-4.13.0/drivers/input/mouse/bcm5974.c`
 
 Extract following files to `src/hid...`:
-* `/linux-source-4.4.0/drivers/hid/hid-apple.c`
-* `/linux-source-4.4.0/drivers/hid/hid-core.c`
-* `/linux-source-4.4.0/drivers/hid/hid-debug.c`
-* `/linux-source-4.4.0/drivers/hid/hid-ids.h`
-* `/linux-source-4.4.0/drivers/hid/hid-input.c`
-* `/linux-source-4.4.0/drivers/hid/hidraw.c`
+* `/linux-source-4.13.0/drivers/hid/hid-apple.c`
+* `/linux-source-4.13.0/drivers/hid/hid-core.c`
+* `/linux-source-4.13.0/drivers/hid/hid-debug.c`
+* `/linux-source-4.13.0/drivers/hid/hid-ids.h`
+* `/linux-source-4.13.0/drivers/hid/hid-input.c`
+* `/linux-source-4.13.0/drivers/hid/hidraw.c`
 
 Apply the patches in the same folders.
 
-Build a package with `make`
+Build a package with `make` (requires fpm http://fpm.readthedocs.io/en/latest/installing.html)
+Install with: `sudo dpkg -i ./build/magictrackpad2-dkms_1.1.0_all.deb`
 
 
 Thanks:

@@ -6,7 +6,7 @@ PARTS="bcm5974 hid"
 
 for PART in $PARTS; do
   dkms_name="$PART"
-  dkms_version="4.4+magictrackpad2"
+  dkms_version="4.13+magictrackpad2"
 
   case "$1" in
     remove|upgrade|deconfigure)
