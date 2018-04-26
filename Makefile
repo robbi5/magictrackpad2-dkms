@@ -1,8 +1,8 @@
 #!/usr/bin/make -f
 
 PKG_NAME=magictrackpad2-dkms
-PKG_VERSION=1.0.0
-PKG_DESCRIPTION="Patched BCM-5974 and hid-apple modules from kernel 4.4 for including Magic Trackpad 2 support."
+PKG_VERSION=1.1.0
+PKG_DESCRIPTION="Patched BCM-5974 and hid-apple modules from kernel 4.15 for including Magic Trackpad 2 support."
 
 MAINTAINER="robbi5 <robbi5@robbi5.de>"
 HOMEPAGE="https://github.com/robbi5/magictrackpad2-dkms"
