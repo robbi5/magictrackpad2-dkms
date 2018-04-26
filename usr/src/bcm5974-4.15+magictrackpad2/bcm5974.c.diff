@@ -1,0 +1,146 @@
+18a19
+>  * Copyright (C) 2016      Marek Wyborski (mw@emwesoft.com)
+98a100,101
+> /* MagicTrackpad2 (2015) */
+> #define USB_DEVICE_ID_APPLE_MAGICTRACKPAD2	0x0265
+163a167,168
+> 	/* MagicTrackpad2 */
+>  	BCM5974_DEVICE(USB_DEVICE_ID_APPLE_MAGICTRACKPAD2),
+193c198,199
+< 	TYPE4			/* additional header field for pressure data */
+---
+> 	TYPE4,			/* additional header field for pressure data */
+> 	TYPE5			/* format for magic trackpad 2 */
+200a207
+> #define HEADER_TYPE5		( 6 * sizeof(__le16))
+206a214
+> #define BUTTON_TYPE5		1
+215a224
+> #define FSIZE_TYPE5		(9)
+221a231
+> #define DELTA_TYPE5		(0 * sizeof(__le16))
+227a238
+> #define USBMSG_TYPE5		2, 0x302, 1, 1, 0x1, 0x0
+249a261,272
+> /* trackpad finger structure for type5 (magic trackpad), le16-aligned */
+> struct tp_finger_type5 {
+> 	u8 abs_x;			/* absolute x coodinate */
+> 	u8 abs_x_y;			/* absolute x,y coodinate */
+> 	u8 abs_y[2];		/* absolute y coodinate */
+> 	u8 touch_major;		/* touch area, major axis */
+> 	u8 touch_minor;		/* touch area, minor axis */
+> 	u8 size;			/* tool area, size */
+> 	u8 pressure;		/* pressure on forcetouch touchpad */
+> 	u8 orientation_origin;	/* orientation and id */
+> } __attribute__((packed,aligned(2)));
+> 
+499a523,535
+> 	{
+> 		USB_DEVICE_ID_APPLE_MAGICTRACKPAD2,
+> 		USB_DEVICE_ID_APPLE_MAGICTRACKPAD2,
+> 		USB_DEVICE_ID_APPLE_MAGICTRACKPAD2,
+> 		HAS_INTEGRATED_BUTTON,
+> 		0, sizeof(struct bt_data),
+> 		0x83, DATAFORMAT(TYPE5),
+> 		{ SN_PRESSURE, 0, 300 },
+> 		{ SN_WIDTH, 0, 2048 },
+> 		{ SN_COORD, -3678, 3934 },
+> 		{ SN_COORD, -2479, 2586 },
+> 		{ SN_ORIENT, -MAX_FINGER_ORIENTATION, MAX_FINGER_ORIENTATION }
+> 	},
+543,544c579,582
+< 	set_abs(input_dev, ABS_MT_WIDTH_MAJOR, &cfg->w);
+< 	set_abs(input_dev, ABS_MT_WIDTH_MINOR, &cfg->w);
+---
+> 	if (cfg->tp_type != TYPE5) {
+>  		set_abs(input_dev, ABS_MT_WIDTH_MAJOR, &cfg->w);
+>  		set_abs(input_dev, ABS_MT_WIDTH_MINOR, &cfg->w);
+>  	}
+598a637,653
+> static void report_finger_data_type5(struct input_dev *input, int slot,
+> 			       const struct input_mt_pos *pos,
+> 			       const struct tp_finger_type5 *f)
+> {
+> 		input_mt_slot(input, slot);
+> 		input_mt_report_slot_state(input, MT_TOOL_FINGER, true);
+> 
+> 		input_report_abs(input, ABS_MT_TOUCH_MAJOR,
+> 				 raw2int(f->touch_major) << 2);
+> 		input_report_abs(input, ABS_MT_TOUCH_MINOR,
+> 				 raw2int(f->touch_minor) << 2);
+> 		input_report_abs(input, ABS_MT_ORIENTATION,
+> 			MAX_FINGER_ORIENTATION - ((f->orientation_origin & 0xf0) << 6));
+> 		input_report_abs(input, ABS_MT_POSITION_X, pos->x << 1);
+> 		input_report_abs(input, ABS_MT_POSITION_Y, pos->y << 1);
+> }
+> 
+617a673,691
+> static void report_synaptics_data_type5(struct input_dev *input,
+> 				  const struct bcm5974_config *cfg,
+> 				  const struct tp_finger_type5 *f, int raw_n)
+> {
+> 	int abs_p = 0, abs_w = 0;
+> 
+> 	if (raw_n) {
+> 		int p = f->pressure;
+> 		int w = f->size;
+> 		if (p && w) {
+> 			abs_p = p;
+> 			abs_w = w;
+> 		}
+> 	}
+> 
+> 	input_report_abs(input, ABS_PRESSURE, abs_p);
+> 	input_report_abs(input, ABS_TOOL_WIDTH, abs_w);
+> }
+> 
+622a697
+> 	const struct tp_finger_type5 *f_type5;
+633,636c708,724
+< 		if (raw2int(f->touch_major) == 0)
+< 			continue;
+< 		dev->pos[n].x = raw2int(f->abs_x);
+< 		dev->pos[n].y = c->y.min + c->y.max - raw2int(f->abs_y);
+---
+> 		if (dev->cfg.tp_type != TYPE5) {
+> 			if (raw2int(f->touch_major) == 0)
+> 				continue;
+> 			dev->pos[n].x = raw2int(f->abs_x);
+> 			dev->pos[n].y = c->y.min + c->y.max - raw2int(f->abs_y);
+> 		}
+> 		else {
+> 			u16 tmp_x;
+>  			u32 tmp_y;
+>  			f_type5 = (const struct tp_finger_type5*) f;
+>  			if (f_type5->pressure == 0)
+>  				continue;
+>  			tmp_x = le16_to_cpu(*((__le16*)f_type5)) & 0x1fff;
+>  			dev->pos[n].x = (s16) (tmp_x << 3) >> 3;
+>  			tmp_y = (s32) le32_to_cpu(*((__le32*)f_type5));
+>  			dev->pos[n].y = -(s32) (tmp_y << 6) >> 19;
+> 		}
+642,644c730,739
+< 	for (i = 0; i < n; i++)
+< 		report_finger_data(input, dev->slots[i],
+< 				   &dev->pos[i], dev->index[i]);
+---
+> 	for (i = 0; i < n; i++) {
+> 		if (dev->cfg.tp_type != TYPE5) {
+> 			report_finger_data(input, dev->slots[i],
+> 					   &dev->pos[i], dev->index[i]);
+> 		}
+> 		else {
+> 			report_finger_data_type5(input, dev->slots[i], &dev->pos[i],
+>  					(const struct tp_finger_type5 *) dev->index[i]);
+> 		}
+> 	}
+648c743,749
+< 	report_synaptics_data(input, c, get_tp_finger(dev, 0), raw_n);
+---
+> 	if (dev->cfg.tp_type != TYPE5) {
+> 		report_synaptics_data(input, c, get_tp_finger(dev, 0), raw_n);
+> 	}
+> 	else {
+> 		report_synaptics_data_type5(input, c,
+>  			(const struct tp_finger_type5*) get_tp_finger(dev, 0), raw_n);
+> 	}
