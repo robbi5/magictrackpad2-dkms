@@ -13,7 +13,7 @@ It should be enough to build and install the package:
     sudo apt-get install linux-source dkms libelf-dev ruby
     gem install fpm
     make
-    sudo dpkg -i build/magictrackpad2-dkms_x.x.x_all.deb`
+    sudo dpkg -i build/magictrackpad2-dkms_x.x.x_all.deb
 
 If it still doesn't work, you may have to copy the kernel modules from
 `/lib/modules/4.4.0-57-generic/updates/dkms/` to `/lib/modules/4.4.0-57-generic/kernel/drivers/hid/`
