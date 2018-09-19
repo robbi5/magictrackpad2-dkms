@@ -8,7 +8,14 @@ Tested with Kernel 4.4.0-57-generic on Ubuntu 16.04 LTS.
 How to install
 --------------
 
-It should be enough to install the package. If it still doesn't work, you may have to copy the kernel modules from
+It should be enough to build and install the package:
+
+    sudo apt-get install linux-source dkms libelf-dev ruby
+    gem install fpm
+    make
+    sudo dpkg -i build/magictrackpad2-dkms_x.x.x_all.deb
+
+If it still doesn't work, you may have to copy the kernel modules from
 `/lib/modules/4.4.0-57-generic/updates/dkms/` to `/lib/modules/4.4.0-57-generic/kernel/drivers/hid/`
 
 * http://unix.stackexchange.com/questions/240593/kernel-not-recognizing-new-devices-from-dkms-module
